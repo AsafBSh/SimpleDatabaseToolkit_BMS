@@ -6,6 +6,7 @@ import xml.etree.ElementTree as ET
 import xml.dom.minidom as minidom
 from PIL import Image, ImageTk
 import math
+import textwrap
 
 
 class MainPage(Ctk.CTk):
@@ -50,7 +51,7 @@ class MainPage(Ctk.CTk):
         self.add_page(FoldersCreatorPage, "Folder Creator")
 
         # Set Name and Icon
-        self.title("Simple Database Toolkit")
+        self.title("Simple Database Toolkit v1.1")
         self.iconbitmap("128_Icon.ico")
 
     def add_page(self, page_class, title):
@@ -162,7 +163,7 @@ class ReplacePage(Ctk.CTkFrame):
 
         # Log text box with scrollbar
         self.log_frame = Ctk.CTkFrame(self, fg_color="transparent")
-        self.log_frame.pack(pady=10, padx=10, fill="x")
+        self.log_frame.pack(pady=10, padx=10, fill="both", expand=True)
 
         # Text box with scrollbar for summary
         self.summary_text = tk.Text(self.log_frame, height=10, width=80, state="normal")
@@ -453,7 +454,17 @@ class OffsetFixerPage(Ctk.CTkFrame):
             hover_color="#7A92A9",
             text_color="#000000",
         )
-        self.apply_button.pack(pady=10)
+        self.apply_button.pack(pady=10,padx=10)
+
+        # Check Data button
+        self.check_button = Ctk.CTkButton(self,
+            text="Check Data",
+            command=self.check_data,
+            fg_color = "#A1B9D0",
+            hover_color = "#7A92A9",
+            text_color = "#000000"
+        )
+        self.check_button.pack(pady=10,padx=10)
 
         # Log text box with scrollbar
         self.space_label = Ctk.CTkLabel(self, text="")
@@ -464,7 +475,7 @@ class OffsetFixerPage(Ctk.CTkFrame):
         self.choice_label.pack()
 
         self.log_frame = Ctk.CTkFrame(self, fg_color="transparent")
-        self.log_frame.pack(pady=10, padx=10, fill="x")
+        self.log_frame.pack(pady=10, padx=10, fill="both", expand=True)
 
         self.log_text = tk.Text(self.log_frame, height=10, width=80, state="normal")
         self.log_text.pack(side="left", fill="both", expand=True)
@@ -531,12 +542,14 @@ class OffsetFixerPage(Ctk.CTkFrame):
             self.value_entry.pack(side="left")
 
     def apply_changes(self):
+        """
+        Main function to start the offset fixing process based on the selected mode.
+        """
         path = self.xml_path_entry.get()
         feature_number = self.feature_entry.get().strip()
         offset_type = self.offset_type.get()
 
-        # Clear the log before applying changes
-        self.log_text.delete(1.0, tk.END)
+        self.log_text.delete(1.0, tk.END)  # Clear previous log
 
         if not path:
             messagebox.showerror("Error", "Please select a file or folder.")
@@ -552,60 +565,63 @@ class OffsetFixerPage(Ctk.CTkFrame):
             self.apply_changes_single(path, feature_number, offset_type)
 
     def apply_changes_all(self, class_table_path, feature_number, offset_type):
+        """
+        Process all OCD folders found in the ObjectiveRelatedData directory.
+        """
         base_directory = os.path.dirname(class_table_path)
         target_directory = os.path.join(base_directory, "ObjectiveRelatedData")
 
         if not os.path.exists(target_directory):
-            messagebox.showerror(
-                "Error", f"The directory '{target_directory}' does not exist."
-            )
+            self.log_text.insert(tk.END, f"Error: The directory '{target_directory}' does not exist.\n", "error")
             return
 
         changes_made = 0
         log_summary = []
-        try:
-            for folder in os.listdir(target_directory):
-                if folder.startswith("OCD_"):
-                    folder_path = os.path.join(target_directory, folder)
-                    fed_file_name = f"FED_{folder[4:]}.xml"
-                    fed_file_path = os.path.join(folder_path, fed_file_name)
-                    if os.path.exists(fed_file_path):
-                        count = self.update_xml_file(
-                            fed_file_path, feature_number, offset_type
-                        )
-                        if count > 0:
-                            log_summary.append(f"{folder}: {count} features updated.")
-                            changes_made += count
+        for folder in os.listdir(target_directory):
+            if folder.startswith("OCD_"):
+                folder_path = os.path.join(target_directory, folder)
+                fed_file_name = f"FED_{folder[4:]}.xml"
+                fed_file_path = os.path.join(folder_path, fed_file_name)
+                ocd_file_name = f"OCD_{folder[4:]}.xml"
+                ocd_file_path = os.path.join(folder_path, ocd_file_name)
 
-            self.log_text.delete(1.0, tk.END)  # Clear previous log
-            self.log_text.insert(tk.END, "\n".join(log_summary) + "\n")
-            self.log_text.insert(
-                tk.END,
-                f"Total changes applied to {changes_made} features.\n",
-                "success",
-            )
-            self.log_text.see(tk.END)  # Scroll to the end
-        except Exception as e:
-            self.log_text.insert(
-                tk.END, f"Error occurred: {str(e)}\nProcedure stopped.\n", "error"
-            )
-            return
+                if os.path.exists(fed_file_path) and os.path.exists(ocd_file_path):
+                    count = self.update_xml_file(fed_file_path, feature_number, offset_type)
+                    ocd_name = self.get_ocd_name(ocd_file_path)
+                    if count > 0:
+                        log_summary.append(f"{folder} ({ocd_name}): {count} features updated.")
+                        changes_made += count
+
+        for log in log_summary:
+            self.log_text.insert(tk.END, log + "\n", "success")
+
+        if changes_made > 0:
+            self.log_text.insert(tk.END, f"Total changes applied to {changes_made} features.\n", "success")
+        else:
+            self.log_text.insert(tk.END, "No changes were made.\n", "error")
+
+        self.log_text.see(tk.END)  # Scroll to the end
 
     def apply_changes_single(self, folder_path, feature_number, offset_type):
+        """
+        Process a single OCD folder.
+        """
         fed_file_name = f"FED_{os.path.basename(folder_path)[4:]}.xml"
         fed_file_path = os.path.join(folder_path, fed_file_name)
-        if os.path.exists(fed_file_path):
+        ocd_file_name = f"OCD_{os.path.basename(folder_path)[4:]}.xml"
+        ocd_file_path = os.path.join(folder_path, ocd_file_name)
+
+        if os.path.exists(fed_file_path) and os.path.exists(ocd_file_path):
             count = self.update_xml_file(fed_file_path, feature_number, offset_type)
+            ocd_name = self.get_ocd_name(ocd_file_path)
             if count > 0:
-                self.log_text.insert(
-                    tk.END,
-                    f"Changes applied to {count} features in {os.path.basename(folder_path)}.\n",
-                    "success",
-                )
+                self.log_text.insert(tk.END,
+                                     f"Changes applied to {count} features in {os.path.basename(folder_path)} ({ocd_name}).\n",
+                                     "success")
             else:
-                self.log_text.insert(tk.END, "No changes were made.\n")
+                self.log_text.insert(tk.END, "No changes were made.\n", "error")
         else:
-            messagebox.showerror("Error", "FED file not found in the selected folder.")
+            messagebox.showerror("Error", f"FED or OCD file not found in the selected folder.")
 
     def update_xml_file(self, file_path, feature_number, offset_type):
         try:
@@ -678,7 +694,109 @@ class OffsetFixerPage(Ctk.CTkFrame):
         value = float(self.value_entry.get().strip())
         new_value = float(fed.find("Heading").text) + value
         fed.find("Value").text = f"{new_value:.0f}"
+    def check_data(self):
+        """
+        Check all OCD folders and print the amount of features found, including the OCD number and name.
+        """
+        path = self.xml_path_entry.get()
+        feature_number = self.feature_entry.get().strip()
+        self.log_text.delete(1.0, tk.END)  # Clear previous log
 
+        if not path:
+            messagebox.showerror("Error", "Please select a file or folder.")
+            return
+
+        if not feature_number:
+            messagebox.showerror("Error", "Please enter a feature number.")
+            return
+
+        if self.mode_switch.get() == 1:  # All mode
+            found_any = self.check_data_all(path, feature_number)
+            if not found_any:
+                self.log_text.insert(tk.END, f"The feature {feature_number} was not found in any objectives.\n", "error")
+        else:  # Single mode
+            found_any = self.check_data_single(path, feature_number)
+            if not found_any:
+                self.log_text.insert(tk.END, f"No instances of feature {feature_number} found in the selected folder.\n", "error")
+
+    def check_data_all(self, class_table_path, feature_number):
+        """
+        Check all OCD folders in the ObjectiveRelatedData directory for the specified feature number.
+        """
+        base_directory = os.path.dirname(class_table_path)
+        target_directory = os.path.join(base_directory, "ObjectiveRelatedData")
+
+        if not os.path.exists(target_directory):
+            self.log_text.insert(tk.END, f"Error: The directory '{target_directory}' does not exist.\n", "error")
+            return False
+
+        found_any = False
+        for folder in os.listdir(target_directory):
+            if folder.startswith("OCD_"):
+                folder_path = os.path.join(target_directory, folder)
+                found_in_folder = self.process_folder(folder, folder_path, feature_number)
+                if found_in_folder:
+                    found_any = True
+
+        self.log_text.see(tk.END)  # Scroll to the end
+        return found_any
+
+    def check_data_single(self, folder_path, feature_number):
+        """
+        Check a single OCD folder for the specified feature number.
+        """
+        folder = os.path.basename(folder_path)
+        found_in_folder = self.process_folder(folder, folder_path, feature_number)
+        self.log_text.see(tk.END)  # Scroll to the end
+        return found_in_folder
+
+    def process_folder(self, folder, folder_path, feature_number):
+        """
+        Process a single folder to count features and get OCD name.
+        """
+        fed_file_name = f"FED_{folder[4:]}.xml"
+        fed_file_path = os.path.join(folder_path, fed_file_name)
+        ocd_file_name = f"OCD_{folder[4:]}.xml"
+        ocd_file_path = os.path.join(folder_path, ocd_file_name)
+
+        if os.path.exists(fed_file_path) and os.path.exists(ocd_file_path):
+            feature_count = self.count_features(fed_file_path, feature_number)
+            ocd_name = self.get_ocd_name(ocd_file_path)
+            if feature_count > 0:
+                self.log_text.insert(tk.END, f"{folder}: {feature_count} instances of feature {feature_number} found. Name: {ocd_name}\n", "success")
+                return True
+            else:
+                return False
+        else:
+            self.log_text.insert(tk.END, f"Missing FED or OCD file in {folder}\n", "error")
+            return False
+
+    def count_features(self, file_path, feature_number):
+        """
+        Count the number of specific features in the given FED file.
+        """
+        try:
+            tree = ET.parse(file_path)
+            root = tree.getroot()
+            return sum(1 for fed in root.findall('FED') if fed.find('FeatureCtIdx').text == feature_number)
+        except Exception as e:
+            self.log_text.insert(tk.END, f"An error occurred while counting features in {file_path}: {str(e)}\n", "error")
+            return 0
+
+    def get_ocd_name(self, file_path):
+        """
+        Get the name of the OCD from the given OCD file.
+        """
+        try:
+            tree = ET.parse(file_path)
+            root = tree.getroot()
+            ocd = root.find('OCD')
+            if ocd is not None:
+                return ocd.find('Name').text
+            return "Unknown"
+        except Exception as e:
+            self.log_text.insert(tk.END, f"An error occurred while reading OCD name from {file_path}: {str(e)}\n", "error")
+            return "Unknown"
 
 class RunwayDimFixerPage(Ctk.CTkFrame):
     def __init__(self, parent, controller):
@@ -958,9 +1076,14 @@ class FoldersCreatorPage(Ctk.CTkFrame):
 
         # End label and entry
         end_label = Ctk.CTkLabel(self.first_frame, text="End:  ")
-        end_label.pack(side="left", padx=(10, 5))
+        end_label.pack(side="left", padx=(5, 5))
         self.end_entry = Ctk.CTkEntry(self.first_frame)
         self.end_entry.pack(side="left", fill="x", expand=True)
+
+        # Checkbox for adding Parent.dat file
+        self.add_parent_file_var = tk.BooleanVar()
+        parent_file_checkbox = Ctk.CTkCheckBox(self.first_frame, text="Add Parent.dat", variable=self.add_parent_file_var)
+        parent_file_checkbox.pack(side="left", padx=(10, 5))
 
         self.directory_frame = Ctk.CTkFrame(self, fg_color="transparent")
         self.directory_frame.pack(pady=10, padx=10)
@@ -1022,12 +1145,26 @@ class FoldersCreatorPage(Ctk.CTkFrame):
                     return
                 else:
                     os.mkdir(folder_path)
-            messagebox.showinfo(
-                "Success", f"Folders created from {start} to {end} in {directory}"
-            )
+                    if self.add_parent_file_var.get():
+                        self.create_parent_file(folder_path)
+
+            messagebox.showinfo("Success", f"Folders created from {start} to {end} in {directory}")
         except ValueError:
             messagebox.showerror("Error", "Please enter valid start and end numbers.")
 
+
+    def create_parent_file(self, folder_path):
+        """
+        Create a Parent.dat file in the specified folder.
+        """
+        parent_file_content = """Dimensions       = 0 0 0 0 0 0 0
+TextureSets      = 1
+Switches         = 0
+Dofs             = 0
+        """
+        parent_file_path = os.path.join(folder_path, "Parent.dat")
+        with open(parent_file_path, "w") as file:
+            file.write(parent_file_content)
 
 class TutorialPage(Ctk.CTkFrame):
     def __init__(self, parent, controller):
@@ -1086,7 +1223,7 @@ class TutorialPage(Ctk.CTkFrame):
         button.pack(fill="x", pady=5)
 
     def show_replace_page_explanation(self):
-        explanation = """
+        explanation = textwrap.dedent("""
         ## Replace Page
 
         The Replace page allows users to replace specific feature numbers in XML files across multiple folders.
@@ -1112,11 +1249,12 @@ class TutorialPage(Ctk.CTkFrame):
         - Accurate input of Class table feature numbers to prevent errors (Can be found in BMS Editor)
         - Correct selection of folders or XML files
         - Careful review of the summary log to ensure desired changes were made
-        """
-        self.display_explanation(explanation)
+        
+        """)
+        self.display_explanation(explanation,None)
 
     def show_offset_fixer_explanation(self):
-        explanation = """
+        explanation = textwrap.dedent("""
         ## Offset Fixer Page
 
         The Offset Fixer page allows users to adjust offsets and rotations for specific features in XML files.
@@ -1135,21 +1273,24 @@ class TutorialPage(Ctk.CTkFrame):
         ### Usage:
         1. Select mode (Single or All)
         2. Choose the folder or Class Table XML file
-        3. Enter the Class Table feature number to modify
+        3. Enter the Class Table number of the feature
         4. Select the type of offset to adjust (XY, Z,Rotation or value)
         5. Enter the new offset values
         6. Click "Apply Changes" to process the files
         7. Review the log for details on changes made
 
-        ### Additional demands and knowledge:
-        - Accurate input of feature numbers and offset values, delta between centers could be found through placing 2 features on the same place (in the objective viewer), then go to Options -> Draw selected Items Distances. Selecting the 2 features would draw an arrow with a number. The number is the distance in feet. you need to try and calculate the X and Y offsets in order to accuratly repositioning the model. 
-        - Offsets and rotations affect feature positioning are related to the "center mass" assigned by 3D modellers. By selecting the feature in objective viewer or see it in the model viewer you could understand where that location is placed.
-        - Careful review of the log to ensure desired changes were made
-        """
-        self.display_explanation(explanation)
+        ### Additional Considerations:
+        - Ensure accurate input of feature numbers and offset values. The difference between centers can be determined by placing two features in the same location (in the objective viewer), then selecting Options -> Draw Selected Items Distances. This action will display an arrow with a number, representing the distance in feet. You need to calculate the X and Y offsets to accurately reposition the model.
+        - Offsets and rotations affecting feature positioning are linked to the "center mass" assigned by 3D modelers. By selecting the feature in the objective viewer or viewing it in the model viewer, you can understand where that location is positioned.
+        - Carefully review the log to confirm that the desired changes have been made.
+        
+        ### Example of Required Adjustments Between Models with Different Centers:
+        
+        """)
+        self.display_explanation(explanation, "tut_1.png")
 
     def show_runway_dim_fixer_explanation(self):
-        explanation = """
+        explanation = textwrap.dedent("""
         ## Runway Dimension Fixer Page
 
         The Runway Dimension Fixer page allows users to update runway dimensions in PHD XML files.
@@ -1176,11 +1317,11 @@ class TutorialPage(Ctk.CTkFrame):
         - Correct selection of folders or XML files
         - Each RunwayDimType suppose to have 2x RunwayListType. Therefore 2 heading options are available to place in each RunwayDimType heading.
         - Careful review of the log to ensure desired changes were made and to address any warnings
-        """
-        self.display_explanation(explanation)
+        """)
+        self.display_explanation(explanation,None)
 
     def show_folders_creator_explanation(self):
-        explanation = """
+        explanation =textwrap.dedent("""
         ## Folders Creator Page
 
         The Folders Creator page provides a tool for creating multiple numbered folders within a specified directory.
@@ -1206,14 +1347,22 @@ class TutorialPage(Ctk.CTkFrame):
         - Valid numerical input for start and end numbers
         - Selection of an appropriate target directory
         - Awareness of existing folder names to avoid conflicts
-        """
-        self.display_explanation(explanation)
+        """)
+        self.display_explanation(explanation,None)
 
-    def display_explanation(self, explanation):
-        self.text_widget.config(state="normal")
+    def display_explanation(self, explanation, image_path):
+        self.text_widget.config(state='normal')
         self.text_widget.delete(1.0, tk.END)
         self.text_widget.insert(tk.END, explanation)
-        self.text_widget.config(state="disabled")
+
+        # Load and display the image
+        try:
+            pil_image = Image.open(image_path)
+            self.tk_image = ImageTk.PhotoImage(pil_image)
+            self.text_widget.image_create(tk.END, image=self.tk_image)
+        except Exception as e:
+            print(0)
+        self.text_widget.config(state='disabled')
 
 
 if __name__ == "__main__":
