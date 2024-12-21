@@ -37,6 +37,7 @@ class MainPage(Ctk.CTk):
             OffsetFixerPage,
             RunwayDimFixerPage,
             FoldersCreatorPage,
+            ReformatParentsPage
         ):
             page_name = F.__name__
             frame = F(parent=self, controller=self)
@@ -49,10 +50,12 @@ class MainPage(Ctk.CTk):
         self.add_page(OffsetFixerPage, "Offset Fixer")
         self.add_page(RunwayDimFixerPage, "RunwayDim Fixer")
         self.add_page(FoldersCreatorPage, "Folder Creator")
+        self.add_page(ReformatParentsPage, "Rebuild Parents")
 
         # Set Name and Icon
-        self.title("Simple Database Toolkit v1.1")
-        self.iconbitmap("128_Icon.ico")
+        self.title("Simple Database Toolkit v1.2")
+        icon_path = os.path.join("media", "128_Icon.ico")
+        self.iconbitmap(icon_path)
 
     def add_page(self, page_class, title):
         """Add a new page to the TabView."""
@@ -68,10 +71,11 @@ class DashboardPage(Ctk.CTkFrame):
         self.controller = controller
 
         # Load the image
-        pil_image = Image.open("Main.png")
+        image_path = os.path.join("media", "Main.png")
+        pil_image = Image.open(image_path)
 
         # Resize the image if needed
-        # pil_image = pil_image.resize((300, 200), Image.ANTIALIAS)
+        pil_image = pil_image.resize((300, 200), Image.ANTIALIAS)
 
         # Convert PIL image to Tkinter-compatible photo image
         self.tk_image = ImageTk.PhotoImage(pil_image)
@@ -1210,6 +1214,9 @@ class TutorialPage(Ctk.CTkFrame):
         self.add_sidebar_button(
             sidebar_frame, "Folders Creator", self.show_folders_creator_explanation
         )
+        self.add_sidebar_button(
+            sidebar_frame, "Rebuild Parents", self.show_rebuild_parents_explanation
+        )
 
     def add_sidebar_button(self, frame, text, command):
         button = Ctk.CTkButton(
@@ -1260,7 +1267,7 @@ class TutorialPage(Ctk.CTkFrame):
         The Offset Fixer page allows users to adjust offsets and rotations for specific features in XML files.
 
         ### Purpose:
-        - To provide a tool for fine-tuning or orientation the center position of a feature
+        - To provide a tool for fine-tuning or orientation based on the center position of a feature
         - To allow bulk updates of offsets across multiple files
 
         ### Functionality:
@@ -1287,13 +1294,14 @@ class TutorialPage(Ctk.CTkFrame):
         ### Example of Required Adjustments Between Models with Different Centers:
         
         """)
-        self.display_explanation(explanation, "tut_1.png")
+        image_path = os.path.join("media", "tut_1.png")
+        self.display_explanation(explanation, image_path)
 
     def show_runway_dim_fixer_explanation(self):
         explanation = textwrap.dedent("""
         ## Runway Dimension Fixer Page
 
-        The Runway Dimension Fixer page allows users to update runway dimensions in PHD XML files.
+        The Runway Dimension Fixer page allows users to automate runway dimensions in PHD XML files.
 
         ### Purpose:
         - To automate the process of updating runway heading
@@ -1350,6 +1358,58 @@ class TutorialPage(Ctk.CTkFrame):
         """)
         self.display_explanation(explanation,None)
 
+    def show_rebuild_parents_explanation(self):
+        explanation = textwrap.dedent("""
+        ## Rebuild Parents Page
+
+        The Rebuild Parents page allows users to reformat and rebuild parent.dat files in the database.
+
+        ### Purpose:
+        - To ensure consistency in parent.dat file formatting
+        - To automate the process of rebuilding parent files before integrating them into the database
+        - Fix Bugs related to un-assigned BMLs or bad assignments
+
+        ### Functionality:
+        - Supports both single file and father folder (All) modes
+        - Reformats parent.dat files to a standardized format
+        - Renames all processed files to "Parent.dat"
+        - Provides an option to convert ".lod" to ".bml" naming 
+        - Checks for mismatches between BML files mentioned in parent.dat and those present in the folder
+        - Displays a log of changes and any issues encountered
+
+        ### Usage:
+        1. Select mode (Single or All)
+        2. Choose the parent.dat file or father folder containing folders which having parent.dat file in it
+        3. (Optional) Check the "LOD to BML" box to convert ".lod" references to ".bml"
+        4. Click "Rebuild Parents" to process the files
+        5. Click "Check BML Files" to verify BML file consistency
+        6. Review the log for details on changes and any warnings
+
+        ### Limitations and Demands:
+        - Requires accurate selection of parent.dat files or folders
+        - The "LOD to BML" conversion only changes file extensions in the parent.dat file, not the actual files
+        - Users should backup their data before performing bulk operations
+        - Careful review of the log is necessary to ensure desired changes were made
+        - The feature assumes a specific format for parent.dat files
+
+        ### Parent.dat File Format:
+        The feature expects and produces parent.dat files in the following format:
+
+        ```
+        Dimensions       = [7 float values]
+        TextureSets      = [integer]
+        Switches         = [integer]
+        Dofs             = [integer]
+        AddLOD           = [filename] [float]
+        ```
+
+        ### Additional Notes:
+        - The feature preserves the precision of Dimensions values while removing unnecessary trailing zeros
+        - AddSlot lines are reformatted to remove '+' signs and standardize decimal places
+        - Users should ensure that all necessary BML files are present in the folder to avoid warnings
+        """)
+        self.display_explanation(explanation, None)
+
     def display_explanation(self, explanation, image_path):
         self.text_widget.config(state='normal')
         self.text_widget.delete(1.0, tk.END)
@@ -1363,6 +1423,269 @@ class TutorialPage(Ctk.CTkFrame):
         except Exception as e:
             print(0)
         self.text_widget.config(state='disabled')
+
+class ReformatParentsPage(Ctk.CTkFrame):
+    def __init__(self, parent, controller):
+        Ctk.CTkFrame.__init__(self, parent)
+        self.controller = controller
+        self.all_folders_ok = True  # New attribute to track overall status
+
+        # Start label
+        self.start_frame = Ctk.CTkFrame(self)
+        self.start_frame.pack(pady=30, fill="x")
+        start_label = Ctk.CTkLabel(
+            self.start_frame,
+            text="Select a parent.dat file or a folder containing parent.dat files to rebuild and format",
+        )
+        start_label.pack()
+
+        # Frame for file/folder selection
+        self.selection_frame = Ctk.CTkFrame(self, fg_color="transparent")
+        self.selection_frame.pack(pady=10, padx=10, fill="x")
+
+        # Switch for Single/All mode
+        self.left_switch_label = Ctk.CTkLabel(self.selection_frame, text="Single")
+        self.left_switch_label.pack(side="left", padx=(0, 10))
+        self.mode_switch = Ctk.CTkSwitch(
+            self.selection_frame,
+            text="All",
+            command=self.toggle_mode
+        )
+        self.mode_switch.pack(side="left", padx=(5, 10))
+
+        # Label and Entry for file/folder path
+        self.path_label = Ctk.CTkLabel(self.selection_frame, text="Parent File:")
+        self.path_label.pack(side="left", padx=(0, 5))
+        self.path_entry = Ctk.CTkEntry(self.selection_frame, width=400, state="readonly")
+        self.path_entry.pack(side="left", fill="x", expand=True)
+
+        # Button to browse for file/folder
+        self.browse_button = Ctk.CTkButton(
+            self.selection_frame,
+            text="Browse",
+            command=self.browse_path,
+            fg_color="#A1B9D0",
+            hover_color="#7A92A9",
+            text_color="#000000",
+        )
+        self.browse_button.pack(side="left", padx=(5, 0))
+
+        # Frame for buttons
+        self.button_frame = Ctk.CTkFrame(self, fg_color="transparent")
+        self.button_frame.pack(pady=15)
+
+        # Rebuild button
+        self.rebuild_button = Ctk.CTkButton(
+            self.button_frame,
+            text="Rebuild Parents",
+            command=self.rebuild_parents,
+            fg_color="#A1B9D0",
+            hover_color="#7A92A9",
+            text_color="#000000",
+        )
+        self.rebuild_button.pack(side="left", padx=(0, 5))
+
+        # Check BML Files button
+        self.check_bml_button = Ctk.CTkButton(
+            self.button_frame,
+            text="Check BML Files",
+            command=self.check_bml_files,
+            fg_color="#A1B9D0",
+            hover_color="#7A92A9",
+            text_color="#000000",
+        )
+        self.check_bml_button.pack(side="left", padx=(5, 0))
+
+        # Add checkbox for LOD to BML conversion
+        self.lod_to_bml_var = Ctk.BooleanVar()
+        self.lod_to_bml_checkbox = Ctk.CTkCheckBox(
+            self.button_frame,
+            text="LOD to BML",
+            variable=self.lod_to_bml_var,
+            onvalue=True,
+            offvalue=False
+        )
+        self.lod_to_bml_checkbox.pack(side="left", padx=(10, 0))
+
+        # Log text box with scrollbar
+        self.log_frame = Ctk.CTkFrame(self, fg_color="transparent")
+        self.log_frame.pack(pady=10, padx=10, fill="both", expand=True)
+
+        self.log_label = Ctk.CTkLabel(self.log_frame, text="Rebuild Log:")
+        self.log_label.pack()
+
+        self.log_text = tk.Text(self.log_frame, height=10, width=80, state="normal")
+        self.log_text.pack(side="left", fill="both", expand=True)
+
+        self.log_scrollbar = tk.Scrollbar(self.log_frame, command=self.log_text.yview)
+        self.log_scrollbar.pack(side="right", fill="y")
+        self.log_text.config(yscrollcommand=self.log_scrollbar.set)
+
+        # Define tags for coloring text
+        self.log_text.tag_configure("success", foreground="green")
+        self.log_text.tag_configure("error", foreground="red")
+
+    def toggle_mode(self):
+        if self.mode_switch.get() == 1:  # All mode
+            self.path_label.configure(text="Parent Folder:")
+            self.browse_button.configure(text="Select Folder")
+        else:  # Single mode
+            self.path_label.configure(text="Parent File:")
+            self.browse_button.configure(text="Browse")
+
+        self.path_entry.configure(state="normal")
+        self.path_entry.delete(0, tk.END)
+        self.path_entry.configure(state="readonly")
+
+    def browse_path(self):
+        if self.mode_switch.get() == 1:  # All mode
+            path = filedialog.askdirectory(title="Select Folder")
+        else:  # Single mode
+            path = filedialog.askopenfilename(
+                title="Select Parent File",
+                filetypes=[("DAT Files", "*.dat")]
+            )
+
+        if path:
+            self.path_entry.configure(state="normal")
+            self.path_entry.delete(0, tk.END)
+            self.path_entry.insert(0, path)
+            self.path_entry.configure(state="readonly")
+
+    def rebuild_parents(self):
+        path = self.path_entry.get()
+        if not path:
+            messagebox.showerror("Error", "Please select a file or folder first.")
+            return
+
+        self.log_text.delete(1.0, tk.END)
+
+        if self.mode_switch.get() == 1:  # All mode
+            self.rebuild_all(path)
+        else:  # Single mode
+            self.rebuild_single(path)
+
+    def rebuild_single(self, file_path):
+        try:
+            folder_path = os.path.dirname(file_path)
+            new_file_path = os.path.join(folder_path, "Parent.dat")
+
+            with open(file_path, 'r') as file:
+                content = file.read()
+
+            formatted_content = self.format_parent_content(content)
+
+            with open(new_file_path, 'w') as file:
+                file.write(formatted_content)
+
+            if file_path.lower() != new_file_path.lower():
+                os.rename(file_path, new_file_path)
+
+            self.log_text.insert(tk.END, f"Rebuilt and formatted: {new_file_path}\n", "success")
+        except Exception as e:
+            self.log_text.insert(tk.END, f"Error processing {file_path}: {str(e)}\n", "error")
+
+    def rebuild_all(self, folder_path):
+        for root, dirs, files in os.walk(folder_path):
+            parent_file = next((f for f in files if f.lower() == 'parent.dat'), None)
+            if parent_file:
+                file_path = os.path.join(root, parent_file)
+                new_file_path = os.path.join(root, "Parent.dat")
+                self.rebuild_single(file_path)
+                if file_path != new_file_path:
+                    os.rename(file_path, new_file_path)
+
+    def format_parent_content(self, content):
+        lines = content.strip().split('\n')
+        formatted_lines = []
+
+        for line in lines:
+            parts = line.split('=', 1)
+            if len(parts) == 2:
+                key, value = parts
+                key = key.strip()
+                value = value.strip()
+
+                if key == 'Dimensions':
+                    dimensions = [float(d) for d in value.split()]
+                    formatted_value = ' '.join(f"{d:.7f}".rstrip('0').rstrip('.') for d in dimensions)
+                    formatted_lines.append(f"{key:<16} = {formatted_value}")
+                elif key in ['TextureSets', 'Switches', 'Dofs']:
+                    formatted_lines.append(f"{key:<16} = {value}")
+                elif key == 'AddLOD':
+                    model, distance = value.rsplit(None, 1)
+                    if self.lod_to_bml_var.get() and model.lower().endswith('.lod'):
+                        model = model[:-4] + '.bml'
+                    formatted_lines.append(f"{key:<16} = {model} {float(distance):.0f}")
+                elif key == 'AddSlot':
+                    slot_values = [float(v.strip('+')) for v in value.split()]
+                    formatted_value = ' '.join(f"{v:.1f}".rstrip('0').rstrip('.') for v in slot_values)
+                    formatted_lines.append(f"{key:<16} = {formatted_value}")
+
+                else:
+                    formatted_lines.append(line)
+
+        return '\n'.join(formatted_lines)
+
+    def check_bml_files(self):
+        path = self.path_entry.get()
+        if not path:
+            messagebox.showerror("Error", "Please select a file or folder first.")
+            return
+
+        self.log_text.delete(1.0, tk.END)
+        self.all_folders_ok = True  # Reset the status
+
+        if self.mode_switch.get() == 1:  # All mode
+            self.check_bml_all(path)
+            if self.all_folders_ok:
+                self.log_text.insert(tk.END, "All BML files are correctly referenced in all parent.dat files\n", "success")
+        else:  # Single mode
+            self.check_bml_single(path)
+
+    def check_bml_all(self, base_path):
+        for root, dirs, files in os.walk(base_path):
+            if any(f.lower() == "parent.dat" for f in files):
+                self.check_bml_folder(root, is_all_mode=True)
+
+    def check_bml_single(self, file_path):
+        folder_path = os.path.dirname(file_path)
+        self.check_bml_folder(folder_path, is_all_mode=False)
+
+    def check_bml_folder(self, folder_path, is_all_mode):
+        parent_file = next((f for f in os.listdir(folder_path) if f.lower() == "parent.dat"), None)
+        if not parent_file:
+            self.log_text.insert(tk.END, f"Error: parent.dat not found in {folder_path}\n", "error")
+            self.all_folders_ok = False
+            return
+
+        bml_files = set(f.lower() for f in os.listdir(folder_path) if f.lower().endswith('.bml'))
+        mentioned_bmls = set()
+
+        with open(os.path.join(folder_path, parent_file), 'r') as file:
+            for line in file:
+                if line.strip().lower().startswith('addlod'):
+                    parts = line.split('=')[1].strip().split()
+                    if parts:
+                        mentioned_bmls.add(parts[0].lower())
+
+        missing_bmls = mentioned_bmls - bml_files
+        extra_bmls = bml_files - mentioned_bmls
+
+        if missing_bmls:
+            self.log_text.insert(tk.END, f"Error: The following BML files are mentioned in parent.dat but not found in {folder_path},:\n", "error")
+            for bml in missing_bmls:
+                self.log_text.insert(tk.END, f"- {bml}\n", "error")
+            self.all_folders_ok = False
+
+        if extra_bmls:
+            self.log_text.insert(tk.END, f"Error: The following BML files are in {folder_path}, but not mentioned in parent.dat:\n", "error")
+            for bml in extra_bmls:
+                self.log_text.insert(tk.END, f"- {bml}\n", "error")
+            self.all_folders_ok = False
+
+        if not missing_bmls and not extra_bmls and not is_all_mode:
+            self.log_text.insert(tk.END, "All BML files are correctly referenced in parent.dat\n", "success")
 
 
 if __name__ == "__main__":
