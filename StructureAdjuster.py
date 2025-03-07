@@ -1,4 +1,6 @@
 import os
+import sys
+import re
 import tkinter as tk
 import customtkinter as Ctk
 from tkinter import filedialog, messagebox
@@ -6,8 +8,8 @@ import xml.etree.ElementTree as ET
 import xml.dom.minidom as minidom
 from PIL import Image, ImageTk
 import math
+from math import sqrt
 import textwrap
-
 
 class MainPage(Ctk.CTk):
     def __init__(self, *args, **kwargs):
@@ -50,10 +52,11 @@ class MainPage(Ctk.CTk):
         self.add_page(OffsetFixerPage, "Offset Fixer")
         self.add_page(RunwayDimFixerPage, "RunwayDim Fixer")
         self.add_page(FoldersCreatorPage, "Folder Creator")
-        self.add_page(ReformatParentsPage, "Rebuild Parents")
+        self.add_page(ReformatParentsPage, "Reformat Parents")
+        self.add_page(ParkingFixerPage, "Parking Fixer")
 
         # Set Name and Icon
-        self.title("Simple Database Toolkit v1.2")
+        self.title("Simple Database Toolkit v1.3")
         icon_path = os.path.join("media", "128_Icon.ico")
         self.iconbitmap(icon_path)
 
@@ -73,9 +76,6 @@ class DashboardPage(Ctk.CTkFrame):
         # Load the image
         image_path = os.path.join("media", "Main.png")
         pil_image = Image.open(image_path)
-
-        # Resize the image if needed
-        pil_image = pil_image.resize((300, 200), Image.ANTIALIAS)
 
         # Convert PIL image to Tkinter-compatible photo image
         self.tk_image = ImageTk.PhotoImage(pil_image)
@@ -449,25 +449,29 @@ class OffsetFixerPage(Ctk.CTkFrame):
         # Initially show XY offset entries
         self.show_offset_entries()
 
-        # Apply button
+        # Button frame for Apply and Check Data buttons
+        button_frame = Ctk.CTkFrame(self, fg_color="transparent")
+        button_frame.pack(pady=10)
+
         self.apply_button = Ctk.CTkButton(
-            self,
+            button_frame,
             text="Apply Changes",
             command=self.apply_changes,
             fg_color="#A1B9D0",
             hover_color="#7A92A9",
             text_color="#000000",
         )
-        self.apply_button.pack(pady=10,padx=10)
+        self.apply_button.pack(side="left", padx=(0, 5))
 
-        # Check Data button
-        self.check_button = Ctk.CTkButton(self,
+        self.check_button = Ctk.CTkButton(
+            button_frame,
             text="Check Data",
             command=self.check_data,
-            fg_color = "#A1B9D0",
-            hover_color = "#7A92A9",
-            text_color = "#000000"
+            fg_color="#A1B9D0",
+            hover_color="#7A92A9",
+            text_color="#000000",
         )
+        self.check_button.pack(side="left", padx=(5, 0))
         self.check_button.pack(pady=10,padx=10)
 
         # Log text box with scrollbar
@@ -1215,8 +1219,9 @@ class TutorialPage(Ctk.CTkFrame):
             sidebar_frame, "Folders Creator", self.show_folders_creator_explanation
         )
         self.add_sidebar_button(
-            sidebar_frame, "Rebuild Parents", self.show_rebuild_parents_explanation
+            sidebar_frame, "reformat Parents", self.show_reformat_parents_explanation
         )
+        self.add_sidebar_button(sidebar_frame, "Parking Fixer", self.show_parking_fixer_explanation)
 
     def add_sidebar_button(self, frame, text, command):
         button = Ctk.CTkButton(
@@ -1358,15 +1363,15 @@ class TutorialPage(Ctk.CTkFrame):
         """)
         self.display_explanation(explanation,None)
 
-    def show_rebuild_parents_explanation(self):
+    def show_reformat_parents_explanation(self):
         explanation = textwrap.dedent("""
-        ## Rebuild Parents Page
+        ## reformat Parents Page
 
-        The Rebuild Parents page allows users to reformat and rebuild parent.dat files in the database.
+        The reformat Parents page allows users to reformat and reformat parent.dat files in the database.
 
         ### Purpose:
         - To ensure consistency in parent.dat file formatting
-        - To automate the process of rebuilding parent files before integrating them into the database
+        - To automate the process of reformating parent files before integrating them into the database
         - Fix Bugs related to un-assigned BMLs or bad assignments
 
         ### Functionality:
@@ -1381,7 +1386,7 @@ class TutorialPage(Ctk.CTkFrame):
         1. Select mode (Single or All)
         2. Choose the parent.dat file or father folder containing folders which having parent.dat file in it
         3. (Optional) Check the "LOD to BML" box to convert ".lod" references to ".bml"
-        4. Click "Rebuild Parents" to process the files
+        4. Click "reformat Parents" to process the files
         5. Click "Check BML Files" to verify BML file consistency
         6. Review the log for details on changes and any warnings
 
@@ -1410,6 +1415,39 @@ class TutorialPage(Ctk.CTkFrame):
         """)
         self.display_explanation(explanation, None)
 
+    def show_parking_fixer_explanation(self):
+        explanation = textwrap.dedent("""
+        ## Parking Fixer Page
+
+        The Parking Fixer page allows users to adjust parking points to align with hangars in Falcon BMS objectives.
+
+        ### Purpose:
+        - To automate the process of relocating parking points closer to the Center of the hangars and HAS.
+
+        ### Functionality:
+        - Supports both single folder and multiple folder (All) modes.
+        - Allows selection of a CT XML file and an Objective folder.
+        - Adjusts parking points within a specified radius to hangar locations.
+        - Provides a log of changes made.
+
+        ### Usage:
+        1. Select mode (Single or All).
+        2. Choose the CT XML file and the Objective folder.
+        3. Enter the radius and CT numbers (not FCD) of hangars/Shelters.
+        4. Click "Fix Parking" to process the files.
+        5. Review the log for details on changes made.
+
+        ### Additional Considerations:
+        - Ensure accurate input of hangar CT numbers and radius.
+        - Carefully review the log to confirm desired changes.
+        - it is recommended to start reviewing radiuses from lower number, and then step up and check the results for each iteration.
+        - note that restart for editor is needed in order to see the changes.
+        - None selection of Hangars will cause the algorithm to search Parking points closer to any hangar in the database.
+        - Multiple selection of hangars and shelters is available by seperating the numbers
+        """)
+
+        self.display_explanation(explanation, None)
+
     def display_explanation(self, explanation, image_path):
         self.text_widget.config(state='normal')
         self.text_widget.delete(1.0, tk.END)
@@ -1429,13 +1467,14 @@ class ReformatParentsPage(Ctk.CTkFrame):
         Ctk.CTkFrame.__init__(self, parent)
         self.controller = controller
         self.all_folders_ok = True  # New attribute to track overall status
+        self.max_float_precision = min(sys.float_info.dig, 10)
 
         # Start label
         self.start_frame = Ctk.CTkFrame(self)
         self.start_frame.pack(pady=30, fill="x")
         start_label = Ctk.CTkLabel(
             self.start_frame,
-            text="Select a parent.dat file or a folder containing parent.dat files to rebuild and format",
+            text="Select a parent.dat file or a folder containing parent.dat files to reformat",
         )
         start_label.pack()
 
@@ -1474,16 +1513,16 @@ class ReformatParentsPage(Ctk.CTkFrame):
         self.button_frame = Ctk.CTkFrame(self, fg_color="transparent")
         self.button_frame.pack(pady=15)
 
-        # Rebuild button
-        self.rebuild_button = Ctk.CTkButton(
+        # reformat button
+        self.reformat_button = Ctk.CTkButton(
             self.button_frame,
-            text="Rebuild Parents",
-            command=self.rebuild_parents,
+            text="reformat Parents",
+            command=self.reformat_parents,
             fg_color="#A1B9D0",
             hover_color="#7A92A9",
             text_color="#000000",
         )
-        self.rebuild_button.pack(side="left", padx=(0, 5))
+        self.reformat_button.pack(side="left", padx=(0, 5))
 
         # Check BML Files button
         self.check_bml_button = Ctk.CTkButton(
@@ -1508,11 +1547,14 @@ class ReformatParentsPage(Ctk.CTkFrame):
         self.lod_to_bml_checkbox.pack(side="left", padx=(10, 0))
 
         # Log text box with scrollbar
+        self.text_log_frame = Ctk.CTkFrame(self)
+        self.text_log_frame.pack(fill="x")
+        self.choice_label = Ctk.CTkLabel(self.text_log_frame, text="Reformat Log:")
+        self.choice_label.pack()
+
+
         self.log_frame = Ctk.CTkFrame(self, fg_color="transparent")
         self.log_frame.pack(pady=10, padx=10, fill="both", expand=True)
-
-        self.log_label = Ctk.CTkLabel(self.log_frame, text="Rebuild Log:")
-        self.log_label.pack()
 
         self.log_text = tk.Text(self.log_frame, height=10, width=80, state="normal")
         self.log_text.pack(side="left", fill="both", expand=True)
@@ -1552,7 +1594,7 @@ class ReformatParentsPage(Ctk.CTkFrame):
             self.path_entry.insert(0, path)
             self.path_entry.configure(state="readonly")
 
-    def rebuild_parents(self):
+    def reformat_parents(self):
         path = self.path_entry.get()
         if not path:
             messagebox.showerror("Error", "Please select a file or folder first.")
@@ -1561,11 +1603,11 @@ class ReformatParentsPage(Ctk.CTkFrame):
         self.log_text.delete(1.0, tk.END)
 
         if self.mode_switch.get() == 1:  # All mode
-            self.rebuild_all(path)
+            self.reformat_all(path)
         else:  # Single mode
-            self.rebuild_single(path)
+            self.reformat_single(path)
 
-    def rebuild_single(self, file_path):
+    def reformat_single(self, file_path):
         try:
             folder_path = os.path.dirname(file_path)
             new_file_path = os.path.join(folder_path, "Parent.dat")
@@ -1585,13 +1627,13 @@ class ReformatParentsPage(Ctk.CTkFrame):
         except Exception as e:
             self.log_text.insert(tk.END, f"Error processing {file_path}: {str(e)}\n", "error")
 
-    def rebuild_all(self, folder_path):
+    def reformat_all(self, folder_path):
         for root, dirs, files in os.walk(folder_path):
             parent_file = next((f for f in files if f.lower() == 'parent.dat'), None)
             if parent_file:
                 file_path = os.path.join(root, parent_file)
                 new_file_path = os.path.join(root, "Parent.dat")
-                self.rebuild_single(file_path)
+                self.reformat_single(file_path)
                 if file_path != new_file_path:
                     os.rename(file_path, new_file_path)
 
@@ -1608,7 +1650,7 @@ class ReformatParentsPage(Ctk.CTkFrame):
 
                 if key == 'Dimensions':
                     dimensions = [float(d) for d in value.split()]
-                    formatted_value = ' '.join(f"{d:.7f}".rstrip('0').rstrip('.') for d in dimensions)
+                    formatted_value = ' '.join(f"{d:.{self.max_float_precision}g}" for d in dimensions)
                     formatted_lines.append(f"{key:<16} = {formatted_value}")
                 elif key in ['TextureSets', 'Switches', 'Dofs']:
                     formatted_lines.append(f"{key:<16} = {value}")
@@ -1619,11 +1661,13 @@ class ReformatParentsPage(Ctk.CTkFrame):
                     formatted_lines.append(f"{key:<16} = {model} {float(distance):.0f}")
                 elif key == 'AddSlot':
                     slot_values = [float(v.strip('+')) for v in value.split()]
-                    formatted_value = ' '.join(f"{v:.1f}".rstrip('0').rstrip('.') for v in slot_values)
+                    formatted_value = ' '.join(f"{v:.{self.max_float_precision}g}" for v in slot_values)
                     formatted_lines.append(f"{key:<16} = {formatted_value}")
-
                 else:
                     formatted_lines.append(line)
+
+        # Add a new line at the end of the file
+        formatted_lines.append("")
 
         return '\n'.join(formatted_lines)
 
@@ -1686,6 +1730,296 @@ class ReformatParentsPage(Ctk.CTkFrame):
 
         if not missing_bmls and not extra_bmls and not is_all_mode:
             self.log_text.insert(tk.END, "All BML files are correctly referenced in parent.dat\n", "success")
+
+
+class ParkingFixerPage(Ctk.CTkFrame):
+    def __init__(self, parent, controller):
+        Ctk.CTkFrame.__init__(self, parent)
+        self.controller = controller
+        self.ct_xml_path = ""
+        self.obj_path = ""
+        self.obj_name = ""
+        self.hangars = []
+        self.parking_points = []
+        self.create_widgets()
+
+    def create_widgets(self):
+
+        # Start label
+        self.start_frame = Ctk.CTkFrame(self)
+        self.start_frame.pack(pady=30, fill="x")
+        start_label = Ctk.CTkLabel(
+            self.start_frame,
+            text="Select the CT XML file of the desired Theater, and the Objective/ObjectiveRelatedData Folder",
+        )
+        start_label.pack()
+        # Mode Selection
+        mode_frame = Ctk.CTkFrame(self)
+        mode_frame.pack(pady=10, padx=10, fill="x")
+        self.mode_var = Ctk.StringVar(value="Single")
+        self.mode_switch = Ctk.CTkSwitch(mode_frame, text="Single/All", variable=self.mode_var,
+                                         onvalue="All", offvalue="Single")
+        self.mode_switch.pack(side="left", padx=(0, 10))
+
+        # Browse Frame
+        browse_frame = Ctk.CTkFrame(self)
+        browse_frame.pack(pady=5, padx=10, fill="x")
+
+        self.browse_button = Ctk.CTkButton(browse_frame, text="Browse Folder", command=self.browse_folder, width=120,
+        fg_color = "#A1B9D0",
+        hover_color = "#7A92A9",
+        text_color = "#000000"
+        )
+        self.browse_button.pack(side="left", padx=(0, 10))
+
+        self.browse_entry = Ctk.CTkEntry(browse_frame, width=400)
+        self.browse_entry.pack(side="left", expand=True, fill="x")
+
+        # CT XML Frame
+        ct_xml_frame = Ctk.CTkFrame(self)
+        ct_xml_frame.pack(pady=5, padx=10, fill="x")
+
+        self.ct_xml_button = Ctk.CTkButton(ct_xml_frame, text="Browse CT XML", command=self.browse_ct_xml, width=120,
+        fg_color = "#A1B9D0",
+        hover_color = "#7A92A9",
+        text_color = "#000000"
+        )
+        self.ct_xml_button.pack(side="left", padx=(0, 10))
+
+        self.ct_xml_entry = Ctk.CTkEntry(ct_xml_frame, width=400)
+        self.ct_xml_entry.pack(side="left", expand=True, fill="x")
+
+        # Radius and Hangar Numbers Frame
+        params_frame = Ctk.CTkFrame(self, fg_color="transparent")
+        params_frame.pack(pady=10, padx=10, fill="x")
+
+        radius_label = Ctk.CTkLabel(params_frame, text="Radius (ft):")
+        radius_label.pack(side="left", padx=(0, 5))
+
+        self.radius_entry = Ctk.CTkEntry(params_frame, width=80)
+        self.radius_entry.insert(0, "10")
+        self.radius_entry.pack(side="left")
+
+        hangar_label = Ctk.CTkLabel(params_frame, text="CT Num of Hangars:")
+        hangar_label.pack(side="left", padx=(10, 5))
+
+        self.hangar_entry = Ctk.CTkEntry(params_frame, width=200)
+        self.hangar_entry.insert(0, "0")
+        self.hangar_entry.pack(side="left", fill="x", expand=True)
+
+
+        # Fix Parking Button
+        self.fix_button = Ctk.CTkButton(self, text="Fix Parking", command=self.fix_parking,
+        fg_color = "#A1B9D0",
+        hover_color = "#7A92A9",
+        text_color = "#000000"
+        )
+        self.fix_button.pack(pady=10)
+
+        # Log Area
+        self.text_log_frame = Ctk.CTkFrame(self)
+        self.text_log_frame.pack(fill="x")
+        self.choice_label = Ctk.CTkLabel(self.text_log_frame, text="Parking Fixing Log:")
+        self.choice_label.pack()
+
+        self.log_area = tk.Text(self, height=20, width=80)
+        self.log_area.pack(pady=10, padx=10, fill="both", expand=True)
+        self.log_area.tag_configure("success", foreground="green")
+        self.log_area.tag_configure("failure", foreground="red")
+        self.log_area.tag_configure("info", foreground="black")
+
+    def browse_folder(self):
+        """Open a file dialog to select a folder."""
+        if self.mode_var.get() == "Single":
+            self.obj_path = filedialog.askdirectory(title="Select Folder")
+        else:
+            self.obj_path = filedialog.askdirectory(title="Select Folder")
+        if self.obj_path:
+            self.browse_entry.delete(0, Ctk.END)
+            self.browse_entry.insert(0, self.obj_path)
+            self.log_message(f"Selected path: {self.obj_path}", "info")
+
+    def browse_ct_xml(self):
+        self.ct_xml_path = filedialog.askopenfilename(title="Select CT XML File", filetypes=[("XML Files", "*.xml")])
+        if self.ct_xml_path:
+            self.ct_xml_entry.delete(0, Ctk.END)
+            self.ct_xml_entry.insert(0, self.ct_xml_path)
+            self.log_message(f"Selected CT XML: {self.ct_xml_path}", "info")
+
+    def fix_parking(self):
+        if not self.obj_path:
+            messagebox.showerror("Error", "Please select a folder or file first.")
+            return
+        if not self.ct_xml_path:
+            messagebox.showerror("Error", "Please select a CT XML file.")
+            return
+
+        radius = float(self.radius_entry.get())
+        needed_hangars = [str(num) for num in re.findall(r'\d+', self.hangar_entry.get())]
+
+        if self.mode_var.get() == "Single":
+            self.process_single_file(self.obj_path, radius, needed_hangars)
+        else:
+            self.process_multiple_files(self.obj_path, radius, needed_hangars)
+
+    def process_single_file(self, obj_path, radius, needed_hangars):
+        self.process_files(obj_path, radius, needed_hangars)
+
+    def process_multiple_files(self, directory, radius, needed_hangars):
+        for root, dirs, files in os.walk(directory):
+            for file in files:
+                if file.lower().endswith('ct.xml'):
+                    self.process_files(file, radius, needed_hangars)
+
+    def process_files(self, obj_path, radius, needed_hangars):
+        # Find the OCD file in the obj_path
+        ocd_file = next((f for f in os.listdir(obj_path) if f.startswith('OCD_') and f.lower().endswith('.xml')), None)
+
+        if not ocd_file:
+            self.log_message(f"Error: No OCD file found in {obj_path}", "failure")
+            return
+
+        # Extract the XXXX number from the OCD file name
+        xxxx_number = ocd_file[4:9]  # Assumes format OCD_XXXXX.xml
+
+        # Construct file paths for PHD, PDX, FED, and OCD files
+        phd_file = f"PHD_{xxxx_number}.xml"
+        pdx_file = f"PDX_{xxxx_number}.xml"
+        fed_file = f"FED_{xxxx_number}.xml"
+        ocd_file = f"OCD_{xxxx_number}.xml"
+
+        # Full paths for the files
+        phd_path = os.path.join(obj_path, phd_file)
+        pdx_path = os.path.join(obj_path, pdx_file)
+        fed_path = os.path.join(obj_path, fed_file)
+        ocd_path = os.path.join(obj_path, ocd_file)
+
+        # Get the actual name of the objective
+        obj_name = self.extract_ocd_name(ocd_path)
+
+        try:
+            self.parse_ct_xml(needed_hangars)
+            self.parse_pdx_xml(pdx_path)
+            self.parse_fed_xml(fed_path)
+            self.relocate_parking_points(radius)
+            self.save_changes(pdx_path,ocd_file,obj_name)
+        except Exception as e:
+            self.log_message(f"Error processing {ocd_file}: {str(e)}", "failure")
+
+
+    def extract_ocd_name(self,ocd_path):
+        try:
+            # Parse the XML file
+            tree = ET.parse(ocd_path)
+            root = tree.getroot()
+
+            # Find the OCD element
+            ocd = root.find('OCD')
+
+            # Extract the Name
+            name = ocd.find('Name').text
+
+            return name
+        except ET.ParseError as e:
+            print(f"Error parsing XML: {e}")
+            return None
+        except AttributeError as e:
+            print(f"Error finding Name element: {e}")
+            return None
+        except Exception as e:
+            print(f"Unexpected error: {e}")
+            return None
+
+    def parse_ct_xml(self,needed_hangars):
+        tree = ET.parse(self.ct_xml_path)
+        root = tree.getroot()
+        self.hangars = []
+        for ct in root.findall("CT"):
+            feature_type = ct.find("Type").text
+            if feature_type == "45":  # Hangar type
+                ct_idx = str(ct.get("Num"))
+                self.hangars.append(ct_idx)
+        #Get only the relevant
+        print(len(needed_hangars))
+        print(needed_hangars[0])
+        if needed_hangars[0] == "0" or len(needed_hangars) == 0:
+            self.filtered_hangars = self.hangars
+        else:
+            self.filtered_hangars = list(set(self.hangars) & set(needed_hangars))
+            if len(self.filtered_hangars) == 0:
+                raise "Error"
+
+
+    def parse_fed_xml(self, file_path):
+        tree = ET.parse(file_path)
+        root = tree.getroot()
+        self.hangar_locations = []
+        for fed in root.findall("FED"):
+            feature_ct_idx = fed.find("FeatureCtIdx").text
+            if feature_ct_idx in self.filtered_hangars:
+                x = float(fed.find("OffsetX").text)
+                y = float(fed.find("OffsetY").text)
+                self.hangar_locations.append({"x": x, "y": y})
+
+    def parse_pdx_xml(self, file_path):
+        tree = ET.parse(file_path)
+        root = tree.getroot()
+        self.parking_points = []
+        for point in root.findall("PD"):
+            point_type = point.find("Type").text
+            if point_type in ["11", "12"]:  # Small and Large parking
+                x = float(point.find("OffsetX").text)
+                y = float(point.find("OffsetY").text)
+                self.parking_points.append({"x": x, "y": y, "idx": point.get("Num")})
+
+    def relocate_parking_points(self, radius):
+        for point in self.parking_points:
+            closest_hangar = None
+            min_distance = float('inf')
+            for hangar in self.hangar_locations:
+                distance = sqrt((point["x"] - hangar["x"]) ** 2 + (point["y"] - hangar["y"]) ** 2)
+                if distance <= radius and distance < min_distance:
+                    closest_hangar = hangar
+                    min_distance = distance
+
+            if closest_hangar:
+                point["x"] = closest_hangar["x"]
+                point["y"] = closest_hangar["y"]
+
+    def save_changes(self, file_path,ocd_file, obj_name):
+        tree = ET.parse(file_path)
+        root = tree.getroot()
+        count_of_relocations = 0
+        changes_made = False
+
+        # Update coordinates if they differ
+        for obj in root.findall("PD"):
+            point_type = obj.find("Type").text
+            class_index = obj.get("Num")
+            if point_type in ["11", "12"]:  # Small and Large parking
+                x_elem = obj.find("OffsetX")
+                y_elem = obj.find("OffsetY")
+                for point in self.parking_points:
+                    if point["idx"] == class_index and (float(x_elem.text) != point["x"] or float(y_elem.text) != point["y"]):
+                        x_elem.text = str(point["x"])
+                        y_elem.text = str(point["y"])
+                        count_of_relocations += 1
+                        changes_made = True
+
+        # Write changes back to file
+        if changes_made:
+            tree.write(file_path, encoding="utf-8", xml_declaration=True)
+            self.log_message(
+                f"Relocated {count_of_relocations} parking point(s) to hangar(s) at {ocd_file} Objective ({obj_name})",
+                "success")
+        else:
+            self.log_message(f"No parking points were relocated at {ocd_file} Objective ({obj_name}).", "info")
+
+
+    def log_message(self, message, tag):
+        self.log_area.insert(tk.END, message + "\n", tag)
+        self.log_area.see(tk.END)
+
 
 
 if __name__ == "__main__":
