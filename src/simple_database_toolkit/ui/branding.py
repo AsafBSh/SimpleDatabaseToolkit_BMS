@@ -15,13 +15,15 @@ APPLICATION_TITLE = f"{PRODUCT_NAME} v{__version__}"
 
 def find_media_asset(filename: str) -> Path | None:
     """Locate media in development and future packaged layouts."""
-    source_root = Path(__file__).resolve().parents[4]
+    project_root = Path(__file__).resolve().parents[3]
+    source_root = project_root.parent
     executable_root = Path(sys.executable).resolve().parent
     bundle_root = Path(getattr(sys, "_MEIPASS", executable_root))
 
     candidates = (
         bundle_root / "Media" / filename,
         executable_root / "Media" / filename,
+        project_root / "Media" / filename,
         source_root / "Media" / filename,
         Path.cwd() / "Media" / filename,
         Path.cwd().parent / "Media" / filename,

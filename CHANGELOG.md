@@ -45,13 +45,17 @@
 
 ### Distribution and verification
 
+- Made the PySide6 GUI the repository's main application: app.py, src/, tests/,
+  tools/, and build scripts now live at the public repository root.
+- Removed the previous StructureAdjuster.py GUI and nested rework directory
+  from the current public source tree; existing Git history remains available.
 - Publish source without the BML editor implementation; include BML capability
   in the complete Windows binary. Public-source builds use the SourceEdition name.
 - Keep the full local source separate from the reviewed public Git checkout.
 - Record public source hashes and exclude private implementation and binaries
   from source commits.
 - Corrected a frozen Qt startup failure caused by an incompatible Poppler ICU DLL.
-- Passed 177 core tests, four publication checks, and 149 public-source tests.
+- Passed automated local and public-source service, GUI, and publication tests.
 - Passed 24 copied-theater XML acceptance tests; all 9,198 installed original
   XML hashes remained unchanged.
 - Verified embedded BML modules and startup of the full Windows bundle.

@@ -35,8 +35,8 @@ class PlaceholderPage(QWidget):
 
         status = QLabel(f"Scheduled for {migration_phase}.")
         detail = QLabel(
-            "The legacy implementation remains available in StructureAdjuster.py "
-            "until this service and page pass equivalence tests."
+            "Earlier implementations remain available in Git history. "
+            "This service and page require equivalence tests before activation."
         )
         detail.setObjectName("MutedText")
         detail.setWordWrap(True)

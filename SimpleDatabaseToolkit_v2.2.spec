@@ -17,12 +17,15 @@ if full_build:
         if not (Path(SPECPATH) / 'src/simple_database_toolkit' / module).is_file():
             raise SystemExit('Full release requires the local BML editor source: ' + module)
 bundle_name = 'SimpleDatabaseToolkit_v2.2' if full_build else 'SimpleDatabaseToolkit_v2.2_SourceEdition'
+media_root = Path(SPECPATH) / 'Media'
+if not media_root.is_dir():
+    media_root = Path(SPECPATH).parent / 'Media'
 
 a = Analysis(
     ['app.py'],
     pathex=['src'],
     binaries=[],
-    datas=[('../Media', 'Media'), ('src/simple_database_toolkit/ui/styles', 'simple_database_toolkit/ui/styles')],
+    datas=[(str(media_root), 'Media'), ('src/simple_database_toolkit/ui/styles', 'simple_database_toolkit/ui/styles')],
     hiddenimports=['simple_database_toolkit.services.bml_service', 'simple_database_toolkit.ui.pages.bml_page'] if full_build else [],
     hookspath=[],
     hooksconfig={},
@@ -51,7 +54,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=['../Media/128_Icon.ico'],
+    icon=[str(media_root / '128_Icon.ico')],
 )
 coll = COLLECT(
     exe,

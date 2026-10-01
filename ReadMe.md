@@ -72,9 +72,17 @@ Cancellation retains completed batch commits and reports that outcome.
 
 ## Source development
 
-The modern application is in `UI_rework_SimpleDatabase_Toolkit/`; the legacy
-application remains at the repository root. From the modern folder, run
-`Setup_Environment.cmd`, then `Launch_Simple_Database_Toolkit.cmd`.
+The PySide6 application is the main code at the repository root. Run
+`Setup_Environment.cmd`, then `Launch_Simple_Database_Toolkit.cmd` from that
+root. The previous `StructureAdjuster.py` GUI is available in Git history.
+
+```text
+app.py                          Application entry point
+src/simple_database_toolkit/    Services, domain models, UI, and workers
+tests/                          Service, GUI, and optional theater tests
+Media/                          Artwork and application icon
+tools/                          Read-only theater validation utility
+```
 
 ```powershell
 & "$env:USERPROFILE\.venvs\sdt\Scripts\python.exe" -m pytest
@@ -87,8 +95,8 @@ than the complete Windows release with the separately maintained BML editor.
 
 ## Validation and remaining work
 
-The full workspace passed 177 core tests plus four publication checks; the
-independent public source passed 149 tests. Installed-data acceptance passed
+The full workspace and independent public source pass automated service, GUI,
+and publication checks. Installed-data acceptance passed
 24 tests on temporary copies of Korea/Israel XML. All 9,198 original XML hashes
 matched after testing. The full binary passed an offscreen startup smoke test;
 that check does not automate editing through the frozen GUI.

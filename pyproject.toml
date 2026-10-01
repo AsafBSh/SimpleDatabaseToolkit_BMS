@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "simple-database-toolkit"
 dynamic = ["version"]
 description = "Modern Windows edition of Falcon BMS Simple Database Toolkit"
-readme = "README.md"
+readme = "ReadMe.md"
 requires-python = ">=3.11"
 dependencies = [
     "PySide6>=6.8.1,<7",

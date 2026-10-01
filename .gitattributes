@@ -1,7 +1,2 @@
-/UI_rework_SimpleDatabase_Toolkit/** -text
-/PUBLIC_SOURCE_MANIFEST.json -text
-/AGENTS.md -text
-/.gitignore -text
-/.gitattributes -text
-/ReadMe.md -text
-/CHANGELOG.md -text
+# Keep reviewed export bytes identical on every host.
+* -text
