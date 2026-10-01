@@ -1,0 +1,19 @@
+# Generated application output and local environments
+build/
+dist/
+artifacts/
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+*.egg-info/
+*.log
+
+# Local editor state
+.idea/
+.cursor/
+
+# Installed theater data and copied validation datasets stay outside source control
+theater-validation-data/

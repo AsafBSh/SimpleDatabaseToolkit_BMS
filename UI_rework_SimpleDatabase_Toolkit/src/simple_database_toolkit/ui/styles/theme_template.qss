@@ -1,0 +1,371 @@
+* {
+    font-family: "Segoe UI";
+    font-size: 10.5pt;
+    color: @TEXT@;
+}
+
+QWidget {
+    background-color: transparent;
+}
+
+QMainWindow,
+QDialog,
+QWidget#ApplicationRoot,
+QWidget#WindowBody,
+QStackedWidget#PageStack,
+QScrollArea#PageScrollArea {
+    background: qlineargradient(
+        x1: 0, y1: 0, x2: 1, y2: 1,
+        stop: 0 @WINDOW_START@,
+        stop: 1 @WINDOW_END@
+    );
+}
+
+QLabel,
+QCheckBox,
+QRadioButton {
+    background-color: transparent;
+    border: none;
+}
+
+QToolTip {
+    color: @TEXT@;
+    background-color: @PANEL_ALT@;
+    border: 1px solid @BORDER_STRONG@;
+    padding: 5px 7px;
+}
+
+QLabel#AppName {
+    color: @TEXT_BRIGHT@;
+    font-size: 14pt;
+    font-weight: 700;
+}
+
+QLabel#ModuleCode {
+    color: @MUTED@;
+    font-family: "Consolas";
+    font-size: 8.5pt;
+    letter-spacing: 1px;
+}
+
+QLabel#PageTitle {
+    color: @TEXT_BRIGHT@;
+    font-size: 19pt;
+    font-weight: 700;
+}
+
+QLabel#PageDescription,
+QLabel#MutedText {
+    color: @MUTED@;
+    font-size: 10pt;
+}
+
+QFrame#ContextBar,
+QFrame#StatusBar {
+    background: qlineargradient(
+        x1: 0, y1: 0, x2: 1, y2: 0,
+        stop: 0 @CHROME_START@,
+        stop: 1 @CHROME_END@
+    );
+    border-color: @BORDER@;
+}
+
+QFrame#NavigationPanel {
+    background: qlineargradient(
+        x1: 0, y1: 0, x2: 0, y2: 1,
+        stop: 0 @NAV_START@,
+        stop: 1 @NAV_END@
+    );
+    border-color: @BORDER@;
+}
+
+QFrame#ContextBar {
+    border-bottom: 1px solid @BORDER@;
+}
+
+QFrame#StatusBar {
+    border-top: 1px solid @BORDER@;
+}
+
+QFrame#NavigationPanel {
+    border-right: 1px solid @BORDER@;
+}
+
+QFrame#Panel {
+    background-color: @PANEL@;
+    border: 1px solid @BORDER@;
+    border-radius: 8px;
+}
+
+QFrame#HeroPanel {
+    background: qlineargradient(
+        x1: 0, y1: 0, x2: 1, y2: 1,
+        stop: 0 @HERO_START@,
+        stop: 1 @HERO_END@
+    );
+    border: 1px solid @BORDER@;
+    border-radius: 8px;
+}
+
+QFrame#MetricPanel {
+    background-color: @PANEL_ALT@;
+    border: 1px solid @BORDER@;
+    border-radius: 6px;
+}
+
+QLabel#PanelTitle {
+    color: @TEXT@;
+    font-family: "Consolas";
+    font-size: 9.5pt;
+    font-weight: 700;
+}
+
+QLabel#MetricValue {
+    color: @ACCENT@;
+    font-family: "Consolas";
+    font-size: 17pt;
+    font-weight: 700;
+}
+
+QLabel#MetricLabel {
+    color: @MUTED@;
+    font-family: "Consolas";
+    font-size: 8.5pt;
+    font-weight: 600;
+}
+
+QLabel#NavigationGroup {
+    color: @QUIET@;
+    font-family: "Consolas";
+    font-size: 8pt;
+    font-weight: 700;
+    letter-spacing: 1px;
+    padding: 11px 8px 4px 8px;
+}
+
+QPushButton {
+    min-height: 34px;
+    padding: 0 13px;
+    color: @TEXT@;
+    background-color: @BUTTON@;
+    border: 1px solid @BORDER_STRONG@;
+    border-radius: 6px;
+    font-size: 10pt;
+    font-weight: 600;
+}
+
+QPushButton:hover {
+    background-color: @BUTTON_HOVER@;
+    border-color: @QUIET@;
+}
+
+QPushButton:pressed {
+    background-color: @PANEL_ALT@;
+}
+
+QPushButton:disabled {
+    color: @QUIET@;
+    background-color: @PANEL@;
+    border-color: @BORDER@;
+}
+
+QPushButton[primary="true"] {
+    color: @ON_ACCENT@;
+    background: qlineargradient(
+        x1: 0, y1: 0, x2: 1, y2: 0,
+        stop: 0 @ACCENT@,
+        stop: 1 @ACCENT_END@
+    );
+    border-color: @ACCENT@;
+}
+
+QPushButton[primary="true"]:hover {
+    background-color: @ACCENT_HOVER@;
+    border-color: @ACCENT_HOVER@;
+}
+
+QPushButton[nav="true"] {
+    min-height: 34px;
+    padding: 0 11px;
+    text-align: left;
+    color: @MUTED@;
+    background: transparent;
+    border: 0;
+    border-radius: 4px;
+    font-family: "Segoe UI";
+    font-size: 10pt;
+    font-weight: 500;
+}
+
+QPushButton[nav="true"]:hover {
+    color: @TEXT@;
+    background-color: @PANEL_ALT@;
+}
+
+QPushButton[nav="true"]:checked {
+    color: @ON_ACCENT@;
+    background: qlineargradient(
+        x1: 0, y1: 0, x2: 1, y2: 0,
+        stop: 0 @ACCENT@,
+        stop: 1 @ACCENT_END@
+    );
+    font-weight: 700;
+}
+
+QLineEdit,
+QSpinBox,
+QDoubleSpinBox,
+QComboBox,
+QPlainTextEdit {
+    min-height: 34px;
+    padding: 0 9px;
+    selection-color: @ON_ACCENT@;
+    selection-background-color: @ACCENT@;
+    color: @TEXT@;
+    background-color: @FIELD@;
+    border: 1px solid @BORDER_STRONG@;
+    border-radius: 4px;
+    font-size: 10pt;
+}
+
+QLineEdit:focus,
+QSpinBox:focus,
+QDoubleSpinBox:focus,
+QComboBox:focus,
+QPlainTextEdit:focus {
+    border: 1px solid @ACCENT@;
+}
+
+QLineEdit:read-only {
+    color: @MUTED@;
+    background-color: @READONLY@;
+}
+
+QComboBox QAbstractItemView {
+    color: @TEXT@;
+    background-color: @PANEL@;
+    border: 1px solid @BORDER_STRONG@;
+    selection-color: @ON_ACCENT@;
+    selection-background-color: @ACCENT@;
+    outline: 0;
+}
+
+QCheckBox {
+    min-height: 26px;
+    spacing: 9px;
+    color: @TEXT@;
+    font-size: 10pt;
+}
+
+QCheckBox::indicator {
+    width: 16px;
+    height: 16px;
+    border: 1px solid @BORDER_STRONG@;
+    border-radius: 3px;
+    background-color: @FIELD@;
+}
+
+QCheckBox::indicator:hover {
+    border-color: @ACCENT@;
+}
+
+QCheckBox::indicator:checked {
+    background-color: @ACCENT@;
+    border-color: @ACCENT@;
+}
+
+QTreeWidget,
+QTableView,
+QListWidget,
+QTextBrowser {
+    color: @TEXT@;
+    background-color: @FIELD@;
+    alternate-background-color: @ALT_ROW@;
+    border: 1px solid @BORDER@;
+    gridline-color: @BORDER@;
+    font-family: "Consolas";
+    font-size: 9.5pt;
+    selection-color: @TEXT_BRIGHT@;
+    selection-background-color: @SELECTION@;
+}
+
+QListWidget::item {
+    min-height: 34px;
+    padding: 5px 8px;
+    border-bottom: 1px solid @BORDER@;
+}
+
+QListWidget::item:hover {
+    background-color: @PANEL_ALT@;
+}
+
+QListWidget::item:selected {
+    color: @TEXT_BRIGHT@;
+    background-color: @SELECTION@;
+}
+
+QTextBrowser {
+    padding: 10px;
+    font-family: "Segoe UI";
+    font-size: 10pt;
+}
+
+QTextBrowser:focus,
+QListWidget:focus {
+    border: 1px solid @ACCENT@;
+}
+
+QHeaderView {
+    background-color: @PANEL_ALT@;
+}
+
+QHeaderView::section {
+    min-height: 30px;
+    padding: 0 8px;
+    color: @MUTED@;
+    background-color: @PANEL_ALT@;
+    border: 0;
+    border-right: 1px solid @BORDER@;
+    border-bottom: 1px solid @BORDER@;
+    font-family: "Consolas";
+    font-size: 8.5pt;
+    font-weight: 700;
+}
+
+QProgressBar {
+    min-height: 9px;
+    max-height: 9px;
+    color: transparent;
+    background-color: @BUTTON@;
+    border: 0;
+    border-radius: 3px;
+}
+
+QProgressBar::chunk {
+    background-color: @ACCENT@;
+    border-radius: 3px;
+}
+
+QScrollBar:vertical {
+    width: 12px;
+    margin: 0;
+    background: @WINDOW@;
+}
+
+QScrollBar::handle:vertical {
+    min-height: 28px;
+    background: @BORDER_STRONG@;
+    border-radius: 4px;
+}
+
+QScrollBar::handle:vertical:hover {
+    background: @QUIET@;
+}
+
+QScrollBar::add-line:vertical,
+QScrollBar::sub-line:vertical,
+QScrollBar::add-page:vertical,
+QScrollBar::sub-page:vertical {
+    height: 0;
+    background: transparent;
+}
