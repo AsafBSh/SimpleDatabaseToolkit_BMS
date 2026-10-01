@@ -8,6 +8,10 @@ complete release binary.
 
 ## Development
 
+See the repository's ReadMe.md for GUI enhancements, all eight release tools,
+runway heading behavior, backups, and installation instructions. Release changes
+are recorded in CHANGELOG.md.
+
 Run Setup_Environment.cmd, then Launch_Simple_Database_Toolkit.cmd from this
 folder. The setup script uses %USERPROFILE%\.venvs\sdt. From this folder:
 
