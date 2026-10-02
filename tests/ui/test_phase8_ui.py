@@ -123,7 +123,7 @@ def test_dashboard_recent_path_empty_and_populated_states() -> None:
     assert page.clear_recent_button.isEnabled()
 
 
-def test_main_window_registers_help_shortcuts_and_restores_last_page(
+def test_main_window_registers_help_shortcuts_and_always_opens_overview(
     tmp_path: Path,
 ) -> None:
     _application()
@@ -136,7 +136,7 @@ def test_main_window_registers_help_shortcuts_and_restores_last_page(
     window = MainWindow(settings)
 
     assert len(window._pages) == (10 if BML_EDITOR_ENABLED else 9)
-    assert window.page_stack.currentWidget() is window._pages["runway"]
+    assert window.page_stack.currentWidget() is window._pages["overview"]
     assert len(window._shortcuts) == (11 if BML_EDITOR_ENABLED else 10)
     assert isinstance(window._pages["tutorial"].widget(), TutorialPage)
     window.close()

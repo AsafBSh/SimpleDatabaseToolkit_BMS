@@ -5,11 +5,11 @@ from __future__ import annotations
 import sys
 from collections.abc import Sequence
 
-from PySide6.QtCore import QSettings
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication
 
 from simple_database_toolkit.ui import MainWindow
+from simple_database_toolkit.settings import create_settings
 from simple_database_toolkit.ui.branding import (
     APPLICATION_TITLE,
     PRODUCT_NAME,
@@ -33,7 +33,7 @@ def create_application(
     if icon_path is not None:
         application.setWindowIcon(QIcon(str(icon_path)))
 
-    settings = QSettings()
+    settings = create_settings()
     selected_theme = settings.value(
         "appearance/theme",
         ThemeName.WHITE.value,

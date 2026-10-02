@@ -507,7 +507,6 @@ class MainWindow(QMainWindow):
             return
         self.page_stack.setCurrentWidget(page)
         self.navigation.select_page(page_id)
-        self.settings.setValue("navigation/last_page", page_id)
 
     def _change_theme(self) -> None:
         application = QApplication.instance()
@@ -555,11 +554,7 @@ class MainWindow(QMainWindow):
             self.restoreGeometry(geometry)
         self._ensure_useful_window_size(geometry is None)
 
-        last_page = str(
-            self.settings.value("navigation/last_page", "overview")
-        )
-        if last_page in self._pages:
-            self.show_page(last_page)
+        self.show_page("overview")
 
     def _ensure_useful_window_size(self, center_window: bool) -> None:
         screen = self.screen() or QApplication.primaryScreen()

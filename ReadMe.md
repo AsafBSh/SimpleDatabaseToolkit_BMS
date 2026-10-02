@@ -27,6 +27,9 @@ See [CHANGELOG.md](CHANGELOG.md) for the v2.2 release changes.
   controls, and diagnostic panels.
 - Overview combines application health, quick actions, recent target paths,
   and the original toolkit artwork.
+- Every launch opens Overview. Release settings stay local to the current user
+  and PC, separate from development settings. New installations start with an
+  empty recent-target history; a user's own history persists between launches.
 - Refined typography, spacing, control sizes, and responsive layouts improve
   readability across tool pages.
 - Target selectors explain the required file or folder for the selected mode.

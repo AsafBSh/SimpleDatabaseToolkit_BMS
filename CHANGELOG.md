@@ -1,5 +1,13 @@
 # Changelog
 
+## v2.2 packaging correction — 2026-10-02
+
+- Always open Overview on startup instead of restoring the last tool page.
+- Store release preferences separately from development and legacy settings.
+- Reset copied preferences when they belong to another PC or user profile.
+- Reject settings, logs, and runtime caches when creating the release ZIP.
+- Preserve each user's own recent history and theme across subsequent launches.
+
 ## v2.2 — 2026-10-01
 
 ### GUI and workflow
