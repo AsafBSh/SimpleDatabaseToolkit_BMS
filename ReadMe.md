@@ -37,6 +37,9 @@ See [CHANGELOG.md](CHANGELOG.md) for the v2.2 release changes.
   session metrics summarize each operation.
 - `Ctrl+K` opens command search; `Ctrl+1` through `Ctrl+9` navigate the full
   release's modules; `F1` opens searchable help and `Ctrl+F` searches its content.
+- Help starts with Getting Started and explains files and terms before the
+  numbered workflows. Each tool includes examples and guidance for checking
+  results, including the runway heading rules and backup restoration.
 - Background workers report progress and support cancellation. One operation
   runs across all pages at a time, so Cancel addresses the active task.
 

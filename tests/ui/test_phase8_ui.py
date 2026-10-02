@@ -28,9 +28,10 @@ def _application() -> QApplication:
 
 
 def test_tutorial_content_covers_all_operational_pages() -> None:
-    count = 8 if BML_EDITOR_ENABLED else 7
+    count = 9 if BML_EDITOR_ENABLED else 8
     assert len(TUTORIAL_TOPICS) == count
     expected = {
+        "overview",
         "replace",
         "offset",
         "runway",
@@ -44,6 +45,21 @@ def test_tutorial_content_covers_all_operational_pages() -> None:
         expected.remove("bml")
     assert {topic.page_id for topic in TUTORIAL_TOPICS} == expected
     assert len({topic.topic_id for topic in TUTORIAL_TOPICS}) == count
+
+
+def test_tutorial_starts_with_beginner_guide_and_numbered_steps() -> None:
+    _application()
+    page = TutorialPage()
+    assert page._current_topic_id() == "getting-started"
+    text = page.document_browser.toPlainText()
+    assert "A Class Table is" in text
+    assert "RESTORE.txt" in text
+    assert "<ol>" in TUTORIAL_TOPICS[0].to_html()
+    assert page.open_tool_button.text() == "OPEN OVERVIEW"
+    page.search_edit.setText("move an object")
+    assert page._current_topic_id() == "offset-fixer"
+    page.search_edit.setText("fix a runway")
+    assert page._current_topic_id() == "runway-dimension-fixer"
 
 
 def test_tutorial_search_filters_and_renders_matching_topic() -> None:

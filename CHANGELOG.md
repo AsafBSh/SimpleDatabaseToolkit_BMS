@@ -1,5 +1,15 @@
 # Changelog
 
+## v2.2 tutorial refresh — 2026-10-02
+
+- Added a Getting Started guide explaining objectives, features, models,
+  Class Table numbers, common file types, logs, and backup restoration.
+- Rewrote every tool tutorial with plain-language introductions, input
+  explanations, numbered steps, practical examples, and result guidance.
+- Explained runway heading tolerance, First/Second priority, and Force with
+  the 200/020 heading example. Kept technical details after the basic workflow.
+- Added everyday help-search examples while retaining technical field searches.
+
 ## v2.2 packaging correction — 2026-10-02
 
 - Always open Overview on startup instead of restoring the last tool page.

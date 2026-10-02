@@ -56,8 +56,8 @@ class TutorialPage(QWidget):
             PageHeader(
                 "HELP / TUTORIAL",
                 "Tutorial",
-                "Search current local guidance for every migrated database "
-                "tool and open the matching workspace directly.",
+                "New here? Start with Getting Started, then choose a tool "
+                "for explained terms, examples, and step-by-step instructions.",
             )
         )
 
@@ -70,12 +70,12 @@ class TutorialPage(QWidget):
         search_title.setObjectName("PanelTitle")
         self.search_edit = QLineEdit()
         self.search_edit.setPlaceholderText(
-            "Search tools, actions, file types, fields, or concepts…"
+            "Search: move an object, fix a runway, backup, texture…"
         )
         self.search_edit.setClearButtonEnabled(True)
         self.search_edit.setAccessibleName("Search tutorial documentation")
         self.search_status = QLabel(
-            "Try: CrossingPoint, TextureSets, atomic, FED, LUT, or preview"
+            "Start with Getting Started, or search for what you want to do."
         )
         self.search_status.setObjectName("MutedText")
         search_layout.addWidget(search_title)
@@ -203,7 +203,8 @@ class TutorialPage(QWidget):
             self.open_tool_button.setEnabled(False)
             self.document_browser.setHtml(
                 "<h1>No matching tutorial</h1>"
-                "<p>Try a tool name, XML field, file type, or action.</p>"
+                "<p>Try a short phrase such as parking, heading, backup, "
+                "or texture. Getting Started explains the common file names.</p>"
             )
             return
 
@@ -240,7 +241,10 @@ class TutorialPage(QWidget):
         self.document_browser.setHtml(topic.to_html(image_source))
         self.document_browser.moveCursor(QTextCursor.MoveOperation.Start)
         self.open_tool_button.setEnabled(True)
-        self.open_tool_button.setText(f"OPEN {topic.title.upper()}")
+        self.open_tool_button.setText(
+            "OPEN OVERVIEW" if topic.page_id == "overview"
+            else f"OPEN {topic.title.upper()}"
+        )
         self._highlight_query(query)
 
     def _highlight_query(self, query: str) -> None:
